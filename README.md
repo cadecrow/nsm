@@ -75,6 +75,41 @@ Customize output file paths:
 nsm --xml-output ./public/sitemap.xml --json-output ./src/data/sitemap.json
 ```
 
+## Configuration
+
+You can create an `nsm.config.json` file in your project root to set default options:
+### Example:
+```json
+{
+  "project": ".",
+  "xml_output": "public/sitemap.xml",
+  "json_output": "src/data/sitemap.json",
+  "base_url": "https://mywebsite.com"
+}
+```
+If no configuration file exists, the tool will create one with default values when first run.
+
+Command line arguments will always override settings in the configuration file.
+
+
+## How This Works
+
+1. When the program starts, it looks for an `nsm.config.json` file
+2. If the file exists, it loads the settings
+3. If the file doesn't exist, it creates one with default values
+4. Command line arguments take precedence over config file settings
+5. The merged configuration is used to run the program
+
+This approach gives you flexibility:
+- You can set project-specific defaults in the config file
+- You can override specific settings via command line when needed
+- The config file is automatically created with sensible defaults
+
+The configuration file is particularly useful for CI/CD pipelines or when running the tool regularly, as users won't need to specify the same arguments each time.
+
+
+
+
 ## Output Files
 
 ### sitemap.xml
