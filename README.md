@@ -29,6 +29,17 @@ cd nsm
 cargo build --release
 ```
 
+### Recommended: Install with cargo
+
+from within nsm directory
+
+```
+cargo install --path .
+```
+
+If you do not use cargo, you can add the Release Directory to your PATH or copy the Binary to a PATH directory.
+I will not explain this here. If you do not know what this means but you want to use one of these options, you'd be best served doing some googling or perplexitying to learn what this means.
+
 ## Usage
 
 ```
@@ -37,12 +48,12 @@ nsm [OPTIONS]
 
 ### Command Line Arguments
 
-|Argument|Short|Description|Default|
-|--------|-----|-----------|-------|
-| --project | -p | Path to your Next.js project | Current directory (.) |
-| --xml-output  | | Output path for sitemap.xml  | sitemap.xml |
-| --json-output | | Output path for sitemap.json | sitemap.json |
-| --base-url | -b | Base URL for your website | https://example.com |
+| Argument      | Short | Description                  | Default               |
+| ------------- | ----- | ---------------------------- | --------------------- |
+| --project     | -p    | Path to your Next.js project | Current directory (.) |
+| --xml-output  |       | Output path for sitemap.xml  | sitemap.xml           |
+| --json-output |       | Output path for sitemap.json | sitemap.json          |
+| --base-url    | -b    | Base URL for your website    | https://example.com   |
 
 ## Examples
 
@@ -55,13 +66,13 @@ nsm
 Specify a different project directory and base URL:
 
 ```
-next-sitemap-gen --project ./my-nextjs-app --base-url https://mywebsite.com
+nsm --project ./my-nextjs-app --base-url https://mywebsite.com
 ```
 
 Customize output file paths:
 
 ```
-next-sitemap-gen --xml-output ./public/sitemap.xml --json-output ./src/data/sitemap.json
+nsm --xml-output ./public/sitemap.xml --json-output ./src/data/sitemap.json
 ```
 
 ## Output Files
