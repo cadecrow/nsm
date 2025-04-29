@@ -10,6 +10,7 @@ A command-line tool written in Rust that scans your Next.js project to automatic
 - Generates standard sitemap.xml for search engines
 - Creates a detailed sitemap.json for building navigation components
 - Handles dynamic routes (e.g., `[id]`, `[...slug]`)
+- Removes directories wrapped in parentheses from routes: `app/(root)/path/page.tsx` => `/path`
 - Preserves file modification times for `lastmod` entries
 
 ## Installation
