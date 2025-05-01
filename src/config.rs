@@ -1,5 +1,7 @@
 use anyhow::{Context, Result};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -16,6 +18,50 @@ pub struct Config {
 
     #[serde(default = "default_base_url")]
     pub base_url: String,
+
+    #[serde(default)]
+    pub excluded_paths: ExcludedPaths,
+
+    #[serde(default)]
+    pub custom_sitemaps: HashMap<String, CustomSitemap>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ExcludedPaths {
+    #[serde(default)]
+    pub exact: Vec<String>,
+
+    #[serde(default)]
+    pub children: Vec<String>,
+
+    #[serde(default)]
+    pub patterns: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomSitemap {
+    pub output: String,
+
+    #[serde(default)]
+    pub include_in_main_json: bool,
+
+    #[serde(default)]
+    pub include_in_main_xml: bool,
+
+    #[serde(default)]
+    pub paths: CustomPaths,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CustomPaths {
+    #[serde(default)]
+    pub exact: Vec<String>,
+
+    #[serde(default)]
+    pub children: Vec<String>,
+
+    #[serde(default)]
+    pub patterns: Vec<String>,
 }
 
 fn default_project_path() -> String {
@@ -41,6 +87,19 @@ impl Default for Config {
             xml_output: default_xml_output(),
             json_output: default_json_output(),
             base_url: default_base_url(),
+            excluded_paths: ExcludedPaths::default(),
+            custom_sitemaps: HashMap::new(),
+        }
+    }
+}
+
+impl Default for CustomSitemap {
+    fn default() -> Self {
+        Self {
+            output: "custom_sitemap.json".to_string(),
+            include_in_main_json: false,
+            include_in_main_xml: false,
+            paths: CustomPaths::default(),
         }
     }
 }
@@ -70,5 +129,110 @@ impl Config {
         println!("Created default configuration file: nsm.config.json");
 
         Ok(default_config)
+    }
+
+    // Check if a route should be excluded based on Category 1 rules
+    pub fn is_excluded(&self, route: &str) -> bool {
+        // Check exact matches
+        if self.excluded_paths.exact.contains(&route.to_string()) {
+            return true;
+        }
+
+        // Check children paths
+        for parent in &self.excluded_paths.children {
+            if route == parent || route.starts_with(&format!("{}/", parent)) {
+                return true;
+            }
+        }
+
+        // Check regex patterns
+        for pattern in &self.excluded_paths.patterns {
+            if let Ok(regex) = Regex::new(pattern) {
+                if regex.is_match(route) {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    // Check if a route belongs to a custom sitemap (Category 2)
+    pub fn get_matching_custom_sitemaps(&self, route: &str) -> Vec<String> {
+        let mut matches = Vec::new();
+
+        for (key, custom) in &self.custom_sitemaps {
+            // Check exact matches
+            if custom.paths.exact.contains(&route.to_string()) {
+                matches.push(key.clone());
+                continue;
+            }
+
+            // Check children paths
+            for parent in &custom.paths.children {
+                if route == parent || route.starts_with(&format!("{}/", parent)) {
+                    matches.push(key.clone());
+                    continue;
+                }
+            }
+
+            // Check regex patterns
+            for pattern in &custom.paths.patterns {
+                if let Ok(regex) = Regex::new(pattern) {
+                    if regex.is_match(route) {
+                        matches.push(key.clone());
+                        break;
+                    }
+                }
+            }
+        }
+
+        matches
+    }
+
+    // Check if a route should be included in the main JSON sitemap
+    pub fn include_in_main_json(&self, route: &str) -> bool {
+        // If it's in Category 1, exclude it
+        if self.is_excluded(route) {
+            return false;
+        }
+
+        // Check all matching custom sitemaps
+        let matching_sitemaps = self.get_matching_custom_sitemaps(route);
+        if !matching_sitemaps.is_empty() {
+            // If any matching sitemap excludes from main JSON, exclude it
+            for key in matching_sitemaps {
+                if let Some(custom) = self.custom_sitemaps.get(&key) {
+                    if !custom.include_in_main_json {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    // Check if a route should be included in the main XML sitemap
+    pub fn include_in_main_xml(&self, route: &str) -> bool {
+        // If it's in Category 1, exclude it
+        if self.is_excluded(route) {
+            return false;
+        }
+
+        // Check all matching custom sitemaps
+        let matching_sitemaps = self.get_matching_custom_sitemaps(route);
+        if !matching_sitemaps.is_empty() {
+            // If any matching sitemap excludes from main XML, exclude it
+            for key in matching_sitemaps {
+                if let Some(custom) = self.custom_sitemaps.get(&key) {
+                    if !custom.include_in_main_xml {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
     }
 }
