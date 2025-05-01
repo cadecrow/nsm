@@ -237,8 +237,10 @@ For each custom sitemap:
 When routes match multiple rules:
 
 !!! Note, conflict resolution is currently buggy. I (or an awesome contributor such as maybe... yourself) will fix it and update this.
-Custom sitemap settings for inclusion in the main sitemap will override excluded routes.
-I hit my need for a personal project so I will come back to this when necessary.
+
+If a custom sitemap sets inclusion in the main sitemap to true, it will override excluded routes.
+
+You can still use this just fine for creating custom sitemaps and excluding paths. The bug is just that a conflict in custom_routes will override excluded_routes
 
 #### Intended Behavior
 
