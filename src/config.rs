@@ -20,14 +20,14 @@ pub struct Config {
     pub base_url: String,
 
     #[serde(default)]
-    pub excluded_paths: ExcludedPaths,
+    pub excluded_routes: ExcludedRoutes,
 
     #[serde(default)]
     pub custom_sitemaps: HashMap<String, CustomSitemap>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ExcludedPaths {
+pub struct ExcludedRoutes {
     #[serde(default)]
     pub exact: Vec<String>,
 
@@ -49,11 +49,11 @@ pub struct CustomSitemap {
     pub include_in_main_xml: bool,
 
     #[serde(default)]
-    pub paths: CustomPaths,
+    pub routes: CustomRoutes,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct CustomPaths {
+pub struct CustomRoutes {
     #[serde(default)]
     pub exact: Vec<String>,
 
@@ -87,7 +87,7 @@ impl Default for Config {
             xml_output: default_xml_output(),
             json_output: default_json_output(),
             base_url: default_base_url(),
-            excluded_paths: ExcludedPaths::default(),
+            excluded_routes: ExcludedRoutes::default(),
             custom_sitemaps: HashMap::new(),
         }
     }
@@ -99,7 +99,7 @@ impl Default for CustomSitemap {
             output: "custom_sitemap.json".to_string(),
             include_in_main_json: false,
             include_in_main_xml: false,
-            paths: CustomPaths::default(),
+            routes: CustomRoutes::default(),
         }
     }
 }
@@ -134,19 +134,19 @@ impl Config {
     // Check if a route should be excluded based on Category 1 rules
     pub fn is_excluded(&self, route: &str) -> bool {
         // Check exact matches
-        if self.excluded_paths.exact.contains(&route.to_string()) {
+        if self.excluded_routes.exact.contains(&route.to_string()) {
             return true;
         }
 
-        // Check children paths
-        for parent in &self.excluded_paths.children {
+        // Check children routes
+        for parent in &self.excluded_routes.children {
             if route == parent || route.starts_with(&format!("{}/", parent)) {
                 return true;
             }
         }
 
         // Check regex patterns
-        for pattern in &self.excluded_paths.patterns {
+        for pattern in &self.excluded_routes.patterns {
             if let Ok(regex) = Regex::new(pattern) {
                 if regex.is_match(route) {
                     return true;
@@ -163,13 +163,13 @@ impl Config {
 
         for (key, custom) in &self.custom_sitemaps {
             // Check exact matches
-            if custom.paths.exact.contains(&route.to_string()) {
+            if custom.routes.exact.contains(&route.to_string()) {
                 matches.push(key.clone());
                 continue;
             }
 
-            // Check children paths
-            for parent in &custom.paths.children {
+            // Check children routes
+            for parent in &custom.routes.children {
                 if route == parent || route.starts_with(&format!("{}/", parent)) {
                     matches.push(key.clone());
                     continue;
@@ -177,7 +177,7 @@ impl Config {
             }
 
             // Check regex patterns
-            for pattern in &custom.paths.patterns {
+            for pattern in &custom.routes.patterns {
                 if let Ok(regex) = Regex::new(pattern) {
                     if regex.is_match(route) {
                         matches.push(key.clone());

@@ -6,6 +6,8 @@ A command-line tool written in Rust that scans your Next.js project to automatic
 
 ## Features
 
+Stable Features:
+
 - Automatically detects routes based on Next.js App Router conventions
 - Generates standard sitemap.xml for search engines
 - Creates a detailed sitemap.json with labels and descriptions for building navigation components
@@ -13,7 +15,16 @@ A command-line tool written in Rust that scans your Next.js project to automatic
 - Removes directories wrapped in parentheses from routes: `app/(root)/path/page.tsx` => `/path`
 - Preserves file modification times for `lastmod` entries
 - Preserves custom labels and descriptions for unchanged paths between successive runs
+
+Testing or Under Development:
+
 - Custom output files and path matching rules. See [Advanced Usage](#advanced-usage)
+- - see [Scratch Notes](ScratchNotes.md) for some very informal notes on the current state of development.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+Please review [Contributions & Requests](ContributionsRequests.md) for information on contributing, help to understand the project and its structure, and to see requests for help.
 
 ## Installation
 
@@ -100,20 +111,20 @@ nsm --xml-output ./public/sitemap.xml --json-output ./src/data/sitemap.json
 
 ```json
 [
-	{
-		"route": "/",
-		"path": "app/page.tsx",
-		"label": "Home",
-		"description": "",
-		"last_modified": "2023-04-29T10:42:19Z"
-	},
-	{
-		"route": "/about",
-		"path": "app/about/page.tsx",
-		"label": "About",
-		"description": "",
-		"last_modified": "2023-04-28T15:30:00Z"
-	}
+  {
+    "route": "/",
+    "path": "app/page.tsx",
+    "label": "Home",
+    "description": "",
+    "last_modified": "2023-04-29T10:42:19Z"
+  },
+  {
+    "route": "/about",
+    "path": "app/about/page.tsx",
+    "label": "About",
+    "description": "",
+    "last_modified": "2023-04-28T15:30:00Z"
+  }
 ]
 ```
 
@@ -149,10 +160,10 @@ You can create an `nsm.config.json` file in your project root to set default opt
 
 ```json
 {
-	"project": ".",
-	"xml_output": "public/sitemap.xml",
-	"json_output": "src/data/sitemap.json",
-	"base_url": "https://mywebsite.com"
+  "project": ".",
+  "xml_output": "public/sitemap.xml",
+  "json_output": "src/data/sitemap.json",
+  "base_url": "https://mywebsite.com"
 }
 ```
 
@@ -164,17 +175,17 @@ REMEMBER: Command line arguments will always override settings in the configurat
 
 The `nsm.config.json` file supports advanced path filtering and custom sitemap generation:
 
-### Excluding Paths Entirely
+### Excluding Routes
 
-You can exclude specific paths from both the sitemap.xml and sitemap.json sitemaps:
+You can exclude specific routes from both the sitemap.xml and sitemap.json sitemaps:
 
 ```json
 {
-	"excluded_paths": {
-		"exact": ["/admin", "/login"],
-		"children": ["/drafts"],
-		"patterns": ["^/temp-.*$"]
-	}
+  "excluded_routes": {
+    "exact": ["/admin", "/login"],
+    "children": ["/drafts"],
+    "patterns": ["^/temp-.*$"]
+  }
 }
 ```
 
@@ -185,32 +196,32 @@ You can exclude specific paths from both the sitemap.xml and sitemap.json sitema
 ### Custom Sitemaps and Exclusion Rules
 
 You can generate additional sitemap files for specific groups of routes.
-You can also specify whether or not these paths are added to the main sitemap.json and sitemap.xml files.
+You can also specify whether or not these routes are added to the main sitemap.json and sitemap.xml files.
 
 ```json
 {
-	"custom_sitemaps": {
-		"blog": {
-			"output": "blog_sitemap.json",
-			"include_in_main_json": true,
-			"include_in_main_xml": false,
-			"paths": {
-				"exact": ["/blog"],
-				"children": ["/posts"],
-				"patterns": ["^/articles/.*$"]
-			}
-		},
-		"products": {
-			"output": "products_sitemap.json",
-			"include_in_main_json": false,
-			"include_in_main_xml": true,
-			"paths": {
-				"exact": [],
-				"children": ["/products"],
-				"patterns": []
-			}
-		}
-	}
+  "custom_sitemaps": {
+    "blog": {
+      "output": "blog_sitemap.json",
+      "include_in_main_json": true,
+      "include_in_main_xml": false,
+      "routes": {
+        "exact": ["/blog"],
+        "children": ["/posts"],
+        "patterns": ["^/articles/.*$"]
+      }
+    },
+    "products": {
+      "output": "products_sitemap.json",
+      "include_in_main_json": false,
+      "include_in_main_xml": true,
+      "routes": {
+        "exact": [],
+        "children": ["/products"],
+        "patterns": []
+      }
+    }
+  }
 }
 ```
 
@@ -219,63 +230,26 @@ For each custom sitemap:
 - output: Path where the custom sitemap JSON will be saved
 - include_in_main_json: Whether to include matching routes in the main JSON sitemap
 - include_in_main_xml: Whether to include matching routes in the main XML sitemap
-- paths: Route patterns to include in this custom sitemap
+- routes: Route patterns to include in this custom sitemap
 
-### Path Matching Rules and Conflict Resolution
+### Route Matching Rules and Conflict Resolution
 
-When paths match multiple rules:
+When routes match multiple rules:
 
-If a path is in `excluded_paths`, it won't appear in the main sitemaps, regardless of the rules in `custom_sitemaps`
+!!! Note, conflict resolution is currently buggy. I (or an awesome contributor such as maybe... yourself) will fix it and update this.
+Custom sitemap settings for inclusion in the main sitemap will override excluded routes.
+I hit my need for a personal project so I will come back to this when necessary.
+
+#### Intended Behavior
+
+If a path is in `excluded_routes`, it won't appear in the main sitemaps, regardless of the rules in `custom_sitemaps`
 If a path matches multiple custom sitemaps, it will appear in all matching custom sitemap files
 A path will only appear in the main sitemaps if all its matching custom sitemaps have the respective include*in_main*_ flag set to true. In other words, if any custom sitemap has `include*in_main*_ = false`, then that path will not make it to the main sitemap file.
 
-## Example Configuration
+#### Current Behavior
 
-Here's a complete example of what the configuration file might look like:
-
-```json
-{
-	"project": ".",
-	"xml_output": "public/sitemap.xml",
-	"json_output": "public/sitemap.json",
-	"base_url": "https://example.com",
-
-	"excluded_paths": {
-		"exact": ["/admin", "/login", "/logout"],
-		"children": ["/internal"],
-		"patterns": ["^/temp-.*$", "^/draft-.*$"]
-	},
-
-	"custom_sitemaps": {
-		"blog": {
-			"output": "public/blog_sitemap.json",
-			"include_in_main_json": true,
-			"include_in_main_xml": true,
-			"paths": {
-				"exact": ["/blog"],
-				"children": ["/posts"],
-				"patterns": ["^/articles/.*$"]
-			}
-		},
-		"products": {
-			"output": "public/products_sitemap.json",
-			"include_in_main_json": false,
-			"include_in_main_xml": true,
-			"paths": {
-				"children": ["/products"]
-			}
-		},
-		"docs": {
-			"output": "public/docs_sitemap.json",
-			"include_in_main_json": false,
-			"include_in_main_xml": false,
-			"paths": {
-				"children": ["/docs", "/guides"]
-			}
-		}
-	}
-}
-```
+If a path is in `excluded_routes`, it won't appear in the main sitemaps, BUT rules in `custom_sitemaps` will override this.
+If a path matches multiple custom sitemaps, it will appear in all matching custom sitemap files
 
 ## Example Configuration
 
@@ -283,48 +257,44 @@ Here's a complete example of what the configuration file might look like:
 
 ```json
 {
-	"project": ".",
-	"xml_output": "public/sitemap.xml",
-	"json_output": "public/sitemap.json",
-	"base_url": "https://example.com",
+  "project": ".",
+  "xml_output": "public/sitemap.xml",
+  "json_output": "public/sitemap.json",
+  "base_url": "https://example.com",
 
-	"excluded_paths": {
-		"exact": ["/admin", "/login", "/logout"],
-		"children": ["/internal"],
-		"patterns": ["^/temp-.*$", "^/draft-.*$"]
-	},
+  "excluded_routes": {
+    "exact": ["/admin", "/login", "/logout"],
+    "children": ["/internal"],
+    "patterns": ["^/temp-.*$", "^/draft-.*$"]
+  },
 
-	"custom_sitemaps": {
-		"blog": {
-			"output": "public/blog_sitemap.json",
-			"include_in_main_json": true,
-			"include_in_main_xml": true,
-			"paths": {
-				"exact": ["/blog"],
-				"children": ["/posts"],
-				"patterns": ["^/articles/.*$"]
-			}
-		},
-		"products": {
-			"output": "public/products_sitemap.json",
-			"include_in_main_json": false,
-			"include_in_main_xml": true,
-			"paths": {
-				"children": ["/products"]
-			}
-		},
-		"docs": {
-			"output": "public/docs_sitemap.json",
-			"include_in_main_json": false,
-			"include_in_main_xml": false,
-			"paths": {
-				"children": ["/docs", "/guides"]
-			}
-		}
-	}
+  "custom_sitemaps": {
+    "blog": {
+      "output": "public/blog_sitemap.json",
+      "include_in_main_json": true,
+      "include_in_main_xml": true,
+      "routes": {
+        "exact": ["/blog"],
+        "children": ["/posts"],
+        "patterns": ["^/articles/.*$"]
+      }
+    },
+    "products": {
+      "output": "public/products_sitemap.json",
+      "include_in_main_json": false,
+      "include_in_main_xml": true,
+      "routes": {
+        "children": ["/products"]
+      }
+    },
+    "docs": {
+      "output": "public/docs_sitemap.json",
+      "include_in_main_json": false,
+      "include_in_main_xml": false,
+      "routes": {
+        "children": ["/docs", "/guides"]
+      }
+    }
+  }
 }
 ```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
